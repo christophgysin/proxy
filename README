@@ -1,0 +1,11 @@
+tunnel arbitrary protocols through https
+
+needs:
+  an AWS EC2 account: http://aws.amazon.com
+  Tim's aws script: https://raw.github.com/timkay/aws/master/aws
+
+starts an EC2 micro instance with ArchLinux image
+upgrades ArchLinux
+installs, configures and runs tinyproxy
+creates a local SOCKS proxy, using an ssh tunnel via corkscrew to tinyproxy
+exports the local SOCKS proxy
