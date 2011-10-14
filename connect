@@ -1,0 +1,7 @@
+#!/bin/bash
+
+HOST=${1}
+KEY=${2:-"proxy.pem"}
+
+chmod 600 ${KEY}
+ssh -i ${KEY} -o "ProxyCommand corkscrew ${HOST} 443 %h %p" root@localhost

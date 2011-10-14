@@ -1,0 +1,53 @@
+#!/bin/bash
+#
+# tunnel arbitrary protocols through https
+#
+# needs:
+#   an AWS EC2 account: http://aws.amazon.com
+#   Tim's aws script: https://raw.github.com/timkay/aws/master/aws
+#
+# starts an EC2 micro instance with ArchLinux image
+# upgrades ArchLinux
+# installs, configures and runs tinyproxy
+# creates a local SOCKS proxy, using an ssh tunnel via corkscrew to tinyproxy
+# exports the local SOCKS proxy
+
+img=ami-edc8ff99
+name=proxy
+
+cat > userdata << EOF
+#!/bin/bash
+pacman -Suyq --noconfirm
+pacman -Sq --noconfirm tinyproxy
+cat > /etc/tinyproxy/tinyproxy.conf << EOT
+User nobody
+Group nobody
+Port 443
+MaxClients 100
+MinSpareServers 1
+MaxSpareServers 5
+StartServers 1
+ConnectPort 22
+EOT
+/etc/rc.d/tinyproxy start
+EOF
+
+aws add-group $name
+aws authorize $name --protocol tcp -p 443 -s 0.0.0.0/0
+umask 077
+aws add-keypair $name > $name.pem
+aws run-instance --wait=30 \
+    --type t1.micro \
+    --group $name \
+    --key $name.pem \
+    --user-data-file userdata \
+    $img
+
+ssh -N \
+    -i $name.pem \
+    -D localhost:8080 \
+    -o "ProxyCommand corkscrew $host 443 %h %p" \
+    root@localhost
+
+export all_proxy="socks://localhost:8080"
+export ALL_PROXY="${all_proxy}"
