@@ -13,7 +13,7 @@
 # exports the local SOCKS proxy
 
 img=ami-edc8ff99
-name=proxy
+name=${1:-proxy}
 
 cat > userdata << EOF
 #!/bin/bash
